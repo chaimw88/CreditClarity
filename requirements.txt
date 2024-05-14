@@ -4,4 +4,3 @@ pandas
 pydeck
 streamlit
 pycaret==3.3.2
-pickle==4.0
