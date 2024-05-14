@@ -3,5 +3,5 @@ numpy
 pandas
 pydeck
 streamlit
-pycaret
+pycaret==3.3.2
 pickle
