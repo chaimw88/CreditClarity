@@ -3,11 +3,37 @@ import pandas as pd
 import pickle
 
 # Load the trained model
-loaded_model = pickle.load(open("test_cc", 'rb'))
+loaded_model = pickle.load(open("old_cc", 'rb'))
 
 def main():
-    st.set_page_config(page_title="1Bank Credit Risk and Product Offering App", page_icon="🏦", layout="wide")
-    st.markdown("<h1 style='text-align: center; color: navy;'>Bank Credit Risk Assessment and Product Offering</h1>", unsafe_allow_html=True)
+    st.set_page_config(page_title="Bank Credit Risk and Product Offering App", page_icon="🏦", layout="wide")
+
+    # CSS to style the app
+    st.markdown("""
+        <style>
+            body {
+                background-color: black;
+                color: white;
+            }
+            .stApp {
+                background-color: black;
+            }
+            h1, h2, h3, h4, h5, h6, p, div, label {
+                color: white;
+            }
+            .css-1r6slb0 {
+                color: black;
+            }
+            .low-risk {
+                color: green;
+            }
+            .high-risk {
+                color: red;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<h1 style='text-align: center; color: white;'>Bank Credit Risk Assessment and Product Offering</h1>", unsafe_allow_html=True)
     st.markdown("""
         <div style='text-align: justify;'>
             Use this application to assess your credit risk and discover eligible bank products based on your profile.
@@ -17,6 +43,7 @@ def main():
 
     with st.form("user_input_form"):
         cols = st.columns((1, 1, 1))
+        
         with cols[0]:
             st.subheader("Personal Information")
             gender = st.radio('Gender', ['Male', 'Female'])
@@ -28,7 +55,7 @@ def main():
             own_car = st.radio('Do you own a car?', ['Yes', 'No'])
             own_realty = st.radio('Do you own real estate?', ['Yes', 'No'])
             number_of_children = st.slider('Number of Children', min_value=0, max_value=10, value=1, step=1)
-            yearly_income = st.number_input('Yearly Income (in USD)', min_value=0.0, step=500.0, format='%f')
+            yearly_income = st.number_input('Yearly Income (in USD)', min_value=0.0, step=1000.0, format='%f')
         
         with cols[2]:
             st.subheader("Background Information")
@@ -64,13 +91,13 @@ def main():
                 'NAME_FAMILY_STATUS': family_status,
                 'NAME_INCOME_TYPE': income_type,
                 'NAME_HOUSING_TYPE': housing_type,
-                'FLAG_PHONE': contact_info,
-                'FLAG_EMAIL': contact_info,
-                'OWN_CAR': own_car,
-                'OWN_REALTY': own_realty,
+                'FLAG_PHONE': 1 if contact_info == 'Yes' else 0,
+                'FLAG_EMAIL': 1 if contact_info == 'Yes' else 0,
+                'OWN_CAR': 1 if own_car == 'Yes' else 0,
+                'OWN_REALTY': 1 if own_realty == 'Yes' else 0,
                 'AGE': age,
                 'DAYS_EMPLOYED': days_employed_or_retired,
-                'EMPLOYED_OR_NOT': employed
+                'EMPLOYED_OR_NOT': 1 if employed == 'Yes' else 0
             }
 
             input_df = pd.DataFrame([data])
@@ -87,40 +114,40 @@ def ensure_all_features(input_df, model):
 def assess_risk_and_offer_products(input_df, own_car, own_realty, yearly_income):
     prediction = loaded_model.predict(input_df)
     prediction_prob = loaded_model.predict_proba(input_df)[0][1]
-    risk_status = "low credit risk" if prediction_prob > 0.40 else "high credit risk"
-    st.markdown(f"### Prediction Result: {risk_status}")
-    st.write(f"**Prediction Probability:** {prediction_prob:.2f}")
+    if prediction_prob > 0.40:
+        risk_status = "low credit risk"
+        risk_class = "low-risk"
+    else:
+        risk_status = "high credit risk"
+        risk_class = "high-risk"
+    
+    st.markdown(f"### Prediction Result: <span class='{risk_class}'>{risk_status}</span>", unsafe_allow_html=True)
 
     if prediction_prob > 0.40:
         offer_products(own_car, own_realty, yearly_income)
     else:
-        suggest_improvements(input_df)
+        suggest_improvements()
 
 def offer_products(own_car, own_realty, yearly_income):
     st.subheader("Eligible Product Offerings")
+    product_offerings = []
+
     if own_car == 'No':
-        st.markdown("- **Car Loan:** Consider our competitive car loan rates!")
+        product_offerings.append("- **Car Loan:** Consider our competitive car loan rates!")
     if own_realty == 'No':
-        st.markdown("- **Mortgage:** Unlock home ownership with our tailored mortgages.")
-    if yearly_income > 50000:
-        st.markdown("- **Personal Loan:** You may qualify for a higher personal loan amount.")
+        product_offerings.append("- **Mortgage:** Unlock home ownership with our tailored mortgages.")
+    if yearly_income > 2000:
+        product_offerings.append("- **Personal Loan:** You may qualify for a higher personal loan amount.")
 
-def suggest_improvements(input_df):
+    if product_offerings:
+        for offering in product_offerings:
+            st.markdown(offering)
+    else:
+        st.markdown("Currently, no product offerings available.")
+
+def suggest_improvements():
     st.error("You are currently at a high credit risk. Here are some suggestions to improve your profile:")
-    test_income_modification(input_df)
-
-def test_income_modification(input_df):
-    original_value = input_df.loc[0, 'AMT_INCOME_TOTAL']
-    original_prediction = loaded_model.predict_proba(input_df)[0][1]
-    increments = [0.1, 0.2, 0.3]
-    for increment in increments:
-        modified_value = original_value * (1 + increment)
-        input_df.at[0, 'AMT_INCOME_TOTAL'] = modified_value
-        modified_prediction = loaded_model.predict_proba(input_df)[0][1]
-        if modified_prediction > original_prediction:
-            suggestion_text = f"Increasing **Yearly Income** from ${original_value:,.0f} to ${modified_value:,.0f} could decrease your credit risk."
-            st.markdown("- " + suggestion_text)
-    input_df.at[0, 'AMT_INCOME_TOTAL'] = original_value
+    st.markdown("- We can offer a **credit coach** to help you get back on track.")
 
 if __name__ == "__main__":
     main()
