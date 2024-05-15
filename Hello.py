@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import pycaret
 import pickle
 
 # Load the trained model
@@ -37,7 +36,7 @@ def main():
     st.markdown("<h1 style='text-align: center; color: white;'>Bank Credit Risk Assessment and Product Offering</h1>", unsafe_allow_html=True)
     st.markdown("""
         <div style='text-align: justify;'>
-            Use this application to assess your credit risk and discover eligible bank products based on your profile.
+            Use this application to assess the credit risk of our customers and discover eligible bank products based on their profile.
             Please fill in the information below:
         </div>
     """, unsafe_allow_html=True)
@@ -49,19 +48,23 @@ def main():
             st.subheader("Personal Information")
             gender = st.radio('Gender', ['Male', 'Female'])
             age = st.slider('Age', min_value=18, max_value=100, value=30, step=1)
-            months_with_bank = st.slider('Months with Bank', min_value=0, max_value=300, value=24, step=1)
+            months_with_bank = st.slider('Months with Bank', min_value=0, max_value=150, value=24, step=1)
         
         with cols[1]:
             st.subheader("Financial Information")
             own_car = st.radio('Do you own a car?', ['Yes', 'No'])
             own_realty = st.radio('Do you own real estate?', ['Yes', 'No'])
             number_of_children = st.slider('Number of Children', min_value=0, max_value=10, value=1, step=1)
-            yearly_income = st.number_input('Yearly Income (in USD)', min_value=0.0, step=1000.0, format='%f')
+            yearly_income = st.number_input('Yearly Income', min_value=0.0, step=1000.0, format='%f')
         
         with cols[2]:
             st.subheader("Background Information")
-            days_employed_or_retired = st.number_input('Days Employed or Retired', min_value=0, step=1, format='%d')
             employed = st.radio('Are you currently employed?', ['Yes', 'No'])
+            if employed == 'No':
+                days_employed_or_retired = st.number_input('Days Unemployed/Retired', min_value=0, step=1, format='%d')
+            else:
+                days_employed_or_retired = st.number_input('Days Employed', min_value=0, step=1, format='%d')
+                
             education_type = st.selectbox('Education Level', [
                 'Secondary / Secondary Special', 'Higher Education', 'Lower Secondary',
                 'Incomplete Higher', 'Academic Degree'
@@ -134,11 +137,11 @@ def offer_products(own_car, own_realty, yearly_income):
     product_offerings = []
 
     if own_car == 'No':
-        product_offerings.append("- **Car Loan:** Consider our competitive car loan rates!")
+        product_offerings.append("- **Car Loan:** Consider offering our competitive car loan rates!")
     if own_realty == 'No':
         product_offerings.append("- **Mortgage:** Unlock home ownership with our tailored mortgages.")
     if yearly_income > 2000:
-        product_offerings.append("- **Personal Loan:** You may qualify for a higher personal loan amount.")
+        product_offerings.append("- **Personal Loan:** The person may qualify for a higher personal loan amount.")
 
     if product_offerings:
         for offering in product_offerings:
@@ -147,8 +150,8 @@ def offer_products(own_car, own_realty, yearly_income):
         st.markdown("Currently, no product offerings available.")
 
 def suggest_improvements():
-    st.error("You are currently at a high credit risk. Here are some suggestions to improve your profile:")
-    st.markdown("- We can offer a **credit coach** to help you get back on track.")
+    st.error("This person is currently at a high credit risk. Please contact and offer the following:")
+    st.markdown("- We can offer a **credit coach** to help the person get back on track.")
 
 if __name__ == "__main__":
     main()
